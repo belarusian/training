@@ -18,6 +18,9 @@ __pycache__/
 *.ipynb
 .ipynb_checkpoints/
 
+# Keep training notebook
+!training/main-training.ipynb
+
 # Ignore IDE files
 .vscode/
 .idea/
