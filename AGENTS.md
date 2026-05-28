@@ -1,6 +1,6 @@
 # Training Directory AGENTS.md
 
-## Current State (May 26, 2026)
+## Current State (May 28, 2026)
 
 ### ✅ Completed
 
@@ -22,9 +22,11 @@
    - NVIDIA GeForce RTX 4090 (24GB VRAM)
    - PyTorch 2.10.0+cu130
 
-4. **Unsloth Studio Installed** - Fully working with CUDA support:
-   - 2x faster fine-tuning enabled
-   - All patches applied
+4. **Unsloth Training Environment** - Working with CUDA support:
+   - venv at `unsloth_env/` with Python 3.13
+   - Unsloth 2026.5.8 with 2x faster fine-tuning
+   - PyTorch 2.10.0+cu130 (CUDA-enabled)
+   - vLLM NOT installed (conflicts with unsloth on Windows; training works without it)
 
 ### ✅ Files Created
 
@@ -40,7 +42,12 @@ Training/
 │   ├── Qwen3_(4B)_GRPO.ipynb
 │   └── Ministral_3_(3B)_Reinforcement_Learning_Sudoku_Game.ipynb
 ├── training/                    # Our actual training
-│   └── main-training.ipynb      # Modified notebook for Effect TypeScript
+│   ├── main-training.ipynb      # Notebook version (for reference)
+│   ├── backup/
+│   │   └── main-training-original.ipynb  # Original Unsloth notebook
+│   ├── run-training.py          # Python script version (run this)
+│   └── output/                  # Trained model output
+├── unsloth_env/                 # Python venv with CUDA support
 ├── data/                        # Training data
 │   └── effect-code-samples.json # 428 samples
 ├── AGENTS.md                    # This file
@@ -53,25 +60,68 @@ Training/
 - **GPU**: NVIDIA GeForce RTX 4090 (24GB VRAM)
 - **CUDA**: 13.0
 - **PyTorch**: 2.10.0+cu130
-- **Unsloth**: Installed via Unsloth Studio
+- **Unsloth**: 2026.5.8
 
-### Next Steps
+### Important: Python Environment
 
-1. Launch Unsloth Studio: `unsloth studio -H 0.0.0.0 -p 8888`
-2. Open `training/main-training.ipynb`
-3. Run all cells to train the model
-4. Save LoRA adapter to `training/output/`
+**The system Python (`python`) has a CPU-only PyTorch build and cannot train.**
+
+You MUST use the `unsloth_env` venv which has CUDA-enabled PyTorch:
+
+```powershell
+# Activate the venv
+.\unsloth_env\Scripts\Activate.ps1
+
+# Verify CUDA is available
+python -c "import torch; print(torch.cuda.is_available())"
+# Should print: True
+```
+
+### How to Run Training
+
+**Option 1: Run the Python script directly**
+```powershell
+.\unsloth_env\Scripts\python.exe training\run-training.py
+```
+
+**Option 2: Activate venv first, then run**
+```powershell
+.\unsloth_env\Scripts\Activate.ps1
+python training\run-training.py
+```
+
+The script includes pre-flight checks for:
+- CUDA availability (exits with error if not found)
+- Required packages (unsloth, datasets, trl)
+- Training data file existence
+
+### Training Workflow
+
+1. **Load model** -> Qwen3-4B with LoRA config (4-bit quantized)
+2. **Format data** -> Convert extracted samples to chat messages
+3. **GRPO training** -> Reinforcement learning with reward functions
+   - +1.0 for `<CODE>` tags
+   - +0.5 for Effect imports
+   - +0.3 for Schema usage
+   - +0.2 for exports
+   - -0.5 for responses too short
+4. **Save** -> Export LoRA adapter to `training/output/`
+
+### vLLM Note
+
+vLLM was tried but causes version conflicts on Windows:
+- vLLM requires transformers >= 4.56.0
+- Unsloth requires transformers <= 5.5.0
+
+Training works fine without vLLM. vLLM is only needed for **faster** inference during GRPO, not for correctness.
 
 ### Git Setup
-
-**Initial Commit**: "Initial commit: Training project structure"
-**Initial Commit**: "Initial commit: Training project structure"
-**Total Commits**: 1 (cleaned)
 
 **Remote**: `https://github.com/belarusian/training.git`
 
 ### Notes for Next Session
 
-**✅ Everything is ready for training!**
-
-Just launch Unsloth Studio and open the main training notebook.
+**Ready to train!** Just run:
+```powershell
+.\unsloth_env\Scripts\python.exe training\run-training.py
+```

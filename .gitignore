@@ -14,6 +14,9 @@ __pycache__/
 *.pyd
 .Python/
 
+# Unsloth compiled cache (auto-generated on first run)
+unsloth_compiled_cache/
+
 # Ignore Jupyter notebooks (can be regenerated)
 *.ipynb
 .ipynb_checkpoints/
