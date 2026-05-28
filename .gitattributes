@@ -1,0 +1,5 @@
+# Git LFS patterns for training data
+*.ts
+*.json
+*.csv
+*.parquet

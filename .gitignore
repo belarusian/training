@@ -1,0 +1,25 @@
+# Training data files
+data/extracted-code/effect-code-samples.json
+
+# Ignore node_modules and other large directories
+node_modules/
+.bun/
+.cache/
+.opencode/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python/
+
+# Ignore Jupyter notebooks (can be regenerated)
+*.ipynb
+.ipynb_checkpoints/
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

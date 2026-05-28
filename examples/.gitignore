@@ -1,0 +1,4 @@
+# Ignore notebook outputs
+*.ipynb_checkpoints/
+*.pyc
+__pycache__/
