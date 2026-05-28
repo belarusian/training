@@ -561,15 +561,43 @@
 <div class="concept-card red">
   <h3><span class="tag red">R</span> Reward Model — "The Judge"</h3>
   <p>
-    A neural network (or heuristic function) that <strong>assigns a scalar score</strong> to a
-    <code>(prompt, completion)</code> pair. It was trained separately — often on human preference
-    data (the "thumbs up / thumbs down" from ChatGPT). It is the external judge in the loop.
+    In PPO, a neural network trained on human preference data (thumbs up / thumbs down)
+    scores <code>(prompt, completion)</code> pairs. It is the external judge in the loop.
   </p>
   <div class="formula">r = RewardModel(prompt, completion)</div>
   <p>
-    GRPO / RLVR often replaces this with a <strong>verifiable reward function</strong> instead —
-    e.g. <code>1</code> if the math answer matches, <code>0</code> otherwise. No separate network needed.
+    GRPO / RLVR replaces this with a <strong>verifiable reward function</strong> — a deterministic
+    function that checks if the output satisfies certain criteria. No network, no training, just code.
   </p>
+</div>
+
+<h3>Real example: Effect TypeScript reward function</h3>
+<p>
+  This is the actual reward function used to train <code>qwen3-4b-effect-codegen</code> in this repo:
+</p>
+<div class="formula">
+def reward_fn(completions):<br>
+&nbsp;&nbsp;score = 0.0<br>
+&nbsp;&nbsp;if "&lt;CODE&gt;" in text and "&lt;/CODE&gt;" in text:
+&nbsp;&nbsp;&nbsp;&nbsp;score += 1.0<br>
+&nbsp;&nbsp;if "from effect" in text or "import Effect" in text:
+&nbsp;&nbsp;&nbsp;&nbsp;score += 0.5<br>
+&nbsp;&nbsp;if "Schema" in text:
+&nbsp;&nbsp;&nbsp;&nbsp;score += 0.3<br>
+&nbsp;&nbsp;if "export " in text:
+&nbsp;&nbsp;&nbsp;&nbsp;score += 0.2<br>
+&nbsp;&nbsp;if len(text) &lt; 100:
+&nbsp;&nbsp;&nbsp;&nbsp;score -= 0.5<br>
+</div>
+<p>
+  It checks for structural markers of good Effect TypeScript code — code tags, imports, Schema usage, exports —
+  and penalizes too-short responses. GRPO then computes advantage from the spread of these scores across
+  N sampled completions per prompt (Z-score standardization).
+</p>
+
+<div class="note">
+  <strong>Trained model:</strong> This reward function trains <code>Qwen3-4B</code> to generate Effect-style TypeScript code.
+  The resulting LoRA adapter is available at <a href="https://huggingface.co/Kodep/qwen3-4b-effect-codegen" style="color:var(--accent-blue)">huggingface.co/Kodep/qwen3-4b-effect-codegen</a>.
 </div>
 
 <!-- ============================================================ -->
@@ -657,6 +685,11 @@
       <td><strong>VRAM savings</strong></td>
       <td>—</td>
       <td><span class="tag green">~8x less</span> — no value network + no reward network to load</td>
+    </tr>
+    <tr>
+      <td><strong>Example in this repo</strong></td>
+      <td>—</td>
+      <td>Structural checks: code tags (+1.0), Effect imports (+0.5), Schema (+0.3), exports (+0.2), length penalty (−0.5)</td>
     </tr>
   </tbody>
 </table>
