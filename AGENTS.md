@@ -9,13 +9,11 @@
    - effect: 208 samples
    - opencode: 28 samples
    - effect-examples: 7 samples
-   - Output: `data/effect-code-samples.json`
+   - Output: `extracted-code/effect-code-samples.json`
 
-2. **Repository Structure** - Git repo initialized at `C:\Users\kodep\Training\`:
-   - `examples/` - 4 example notebooks (learning resources)
-   - `training/` - Our training work
-   - `data/` - Extracted training data
-   - Subtrees: effect-smol, effect, effect-examples, opencode
+2. **Training** - Fine-tuned Qwen3-4B with GRPO reinforcement learning:
+   - Model: https://huggingface.co/Kodep/qwen3-4b-effect-codegen
+   - Training script: `training/run-training.py`
 
 3. **GPU Setup Verified**:
    - CUDA 13.0 available
@@ -28,31 +26,20 @@
    - PyTorch 2.10.0+cu130 (CUDA-enabled)
    - vLLM NOT installed (conflicts with unsloth on Windows; training works without it)
 
-### ✅ Files Created
+### Repository Structure
 
 ```
-Training/
-├── examples/                    # 4 example notebooks we studied
-│   ├── effect-smol/ (subtree)
-│   ├── effect/ (subtree)
-│   ├── effect-examples/ (subtree)
-│   ├── opencode/ (subtree)
-│   ├── Qwen3_5_MoE.ipynb
-│   ├── Gemma4_(E2B)_Reinforcement_Learning_Sudoku_Game.ipynb
-│   ├── Qwen3_(4B)_GRPO.ipynb
-│   └── Ministral_3_(3B)_Reinforcement_Learning_Sudoku_Game.ipynb
-├── training/                    # Our actual training
-│   ├── main-training.ipynb      # Notebook version (for reference)
-│   ├── backup/
-│   │   └── main-training-original.ipynb  # Original Unsloth notebook
+├── training/                    # Training work
 │   ├── run-training.py          # Python script version (run this)
-│   └── output/                  # Trained model output
-├── unsloth_env/                 # Python venv with CUDA support
-├── data/                        # Training data
-│   └── effect-code-samples.json # 428 samples
-├── AGENTS.md                    # This file
-├── README.md                    # Project overview
-└── .gitignore                   # Git ignore rules
+│   ├── main-training.ipynb      # Notebook version (reference)
+│   └── backup/                  # Original Unsloth notebook
+├── extracted-code/              # Training data (428 samples)
+├── examples/                    # Learning notebooks
+├── literature/                  # RLHF/GRPO reference material
+├── extract-code.ts              # Data extraction script
+├── LICENSE
+├── README.md
+└── .gitignore
 ```
 
 ### Hardware Specs
@@ -107,6 +94,16 @@ The script includes pre-flight checks for:
    - -0.5 for responses too short
 4. **Save** -> Export LoRA adapter to `training/output/`
 5. **Push** -> Upload to Hugging Face (model weights are too large for GitHub)
+
+### Data Extraction
+
+Extract training samples from Effect repositories:
+
+```bash
+bun run extract-code.ts
+# or with custom directories:
+TRAINING_DIR=/path/to/repos OUTPUT_DIR=/path/to/output bun run extract-code.ts
+```
 
 ### vLLM Note
 

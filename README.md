@@ -1,40 +1,84 @@
-# Training
+# Qwen3-4B Effect TypeScript Fine-tuning
 
-Effect-style TypeScript fine-tuning with GRPO on Qwen3-4B.
+Fine-tune Qwen3-4B to generate high-quality Effect-style TypeScript code using GRPO (Group Relative Policy Optimization).
 
-## Overview
+## Trained Model
 
-This project trains a language model to generate high-quality Effect-style TypeScript code using Reinforcement Learning (GRPO).
+**Download the trained LoRA adapter:**
+https://huggingface.co/Kodep/qwen3-4b-effect-codegen
 
-## What's Inside
-
-- **examples/** - Learning resources (4 notebooks studying Effect patterns)
-- **training/** - Your training notebooks and configurations
-- **data/extracted-code/** - Training data directory
-- **extracted-code/** - 428 extracted Effect TypeScript code samples
-- **scripts/** - Utilities: `fix_grpo`, `insert_reward`, `test_setup`
-- **train_qwen3_grpo_effect_codegen.py** - Main GRPO training script
-
-## Setup
+### Quick Start
 
 ```bash
+# Setup environment
 uv venv unsloth_env --python 3.13
 .\unsloth_env\Scripts\activate
-uv pip install unsloth --torch-backend=auto
+uv pip install unsloth datasets trl --torch-backend=auto
+
+# Run training
+.\unsloth_env\Scripts\python.exe training/run-training.py
 ```
 
-## Usage
+Or load the pre-trained model:
+
+```python
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="Kodep/qwen3-4b-effect-codegen",
+    max_seq_length=4096,
+    load_in_4bit=True,
+)
+```
+
+## Project Structure
+
+```
+├── training/run-training.py          # Main training script (run this)
+├── training/main-training.ipynb      # Notebook version (reference)
+├── training/backup/                  # Original Unsloth notebook
+├── extracted-code/                   # Training data (428 samples)
+├── examples/                         # Learning notebooks
+├── literature/                       # RLHF/GRPO reference material
+├── extract-code.ts                   # Data extraction script
+├── LICENSE
+└── AGENTS.md                         # Agent documentation
+```
+
+## Training Pipeline
+
+1. **Load model** - Qwen3-4B with 4-bit quantization
+2. **Format data** - Convert extracted samples to chat messages
+3. **GRPO training** - Reinforcement learning with reward functions:
+   - +1.0 for `<CODE>` tags
+   - +0.5 for Effect imports
+   - +0.3 for Schema usage
+   - +0.2 for exports
+   - -0.5 for responses too short
+4. **Save** - Export LoRA adapter to `training/output/`
+
+## Data Extraction
+
+Extract training samples from Effect repositories:
 
 ```bash
-unsloth studio -H 0.0.0.0 -p 8888
+bun run extract-code.ts
+# or with custom directories:
+TRAINING_DIR=/path/to/repos OUTPUT_DIR=/path/to/output bun run extract-code.ts
 ```
 
-## Hardware
+## Requirements
 
-- GPU: NVIDIA GeForce RTX 4090 (24GB VRAM)
-- CUDA: 13.0
-- PyTorch: 2.10.0+cu130
+- NVIDIA GPU with CUDA support (tested on RTX 4090, 24GB VRAM)
+- Python 3.13
+- CUDA 12.0+
 
-## Topics
+## Notes
 
-#effect #typescript #reinforcement-learning #grpo #fine-tuning #qwen #unsloth
+- vLLM is not required for training (excluded due to Windows compatibility)
+- Model weights (~500MB LoRA adapter) are hosted on Hugging Face, not in this repo
+- Training takes ~45-60 minutes on RTX 4090
+
+## License
+
+MIT License - see [LICENSE](LICENSE)

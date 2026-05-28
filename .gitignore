@@ -1,31 +1,30 @@
-# Training data files
-data/extracted-code/effect-code-samples.json
+# Unsloth compiled cache (auto-generated on first run)
+unsloth_compiled_cache/
 
-# Ignore node_modules and other large directories
-node_modules/
-.bun/
-.cache/
-.opencode/
-
-# Ignore Python cache
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python/
 
-# Unsloth compiled cache (auto-generated on first run)
-unsloth_compiled_cache/
-
-# Ignore Jupyter notebooks (can be regenerated)
+# Jupyter notebooks (except the main training one)
 *.ipynb
 .ipynb_checkpoints/
-
-# Keep training notebook
 !training/main-training.ipynb
 
-# Ignore IDE files
+# Node.js
+node_modules/
+.bun/
+
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# Training environment (contains large binaries)
+unsloth_env/
+
+# Training output (model weights ~1GB, hosted on Hugging Face)
+training/output/
