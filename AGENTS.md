@@ -106,6 +106,7 @@ The script includes pre-flight checks for:
    - +0.2 for exports
    - -0.5 for responses too short
 4. **Save** -> Export LoRA adapter to `training/output/`
+5. **Push** -> Upload to Hugging Face (model weights are too large for GitHub)
 
 ### vLLM Note
 
@@ -114,6 +115,22 @@ vLLM was tried but causes version conflicts on Windows:
 - Unsloth requires transformers <= 5.5.0
 
 Training works fine without vLLM. vLLM is only needed for **faster** inference during GRPO, not for correctness.
+
+### Hugging Face Model
+
+The trained LoRA adapter is published to Hugging Face:
+- **Model**: https://huggingface.co/Kodep/qwen3-4b-effect-codegen
+
+To load it for inference:
+```python
+from unsloth import FastLanguageModel
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="Kodep/qwen3-4b-effect-codegen",
+    max_seq_length=4096,
+    load_in_4bit=True,
+)
+```
 
 ### Git Setup
 
