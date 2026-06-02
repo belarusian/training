@@ -7,6 +7,21 @@ Fine-tune Qwen3-4B to generate high-quality Effect-style TypeScript code using a
 **Download the trained LoRA adapter:**
 https://huggingface.co/Kodep/qwen3-4b-effect-codegen-v2
 
+### Model Overview
+
+| Feature | Value |
+|---------|-------|
+| Base Model | Qwen3-4B (Qwen3ForCausalLM) |
+| Number of Layers | 36 |
+| Hidden Size | 2560 |
+| Attention Heads | 32 (Q), 8 (KV) |
+| Vocabulary Size | 151936 |
+| Max Position Embeddings | 40960 |
+| LoRA Rank | 64 |
+| Trainable Parameters | 132M (3.18% of base model) |
+| Precision | float16 |
+| License | Apache 2.0 |
+
 ### Model Performance
 
 | Metric | Value |
@@ -25,7 +40,7 @@ https://huggingface.co/Kodep/qwen3-4b-effect-codegen-v2
 from unsloth import FastLanguageModel
 
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="Kodep/qwen3-4b-effect-codegen",
+    model_name="Kodep/qwen3-4b-effect-codegen-v2",
     max_seq_length=4096,
     load_in_4bit=True,
 )
@@ -222,11 +237,14 @@ You MUST use the `unsloth_env` venv.
 To enable fast llama.cpp inference, convert your trained model to GGUF format:
 
 ```powershell
-.\unsloth_env\Scripts\python.exe "C:\Users\kodep\llama.cpp\convert_hf_to_gguf.py" `
-    "training/output-v2/qwen3-4b-effect-codegen-v2" `
-    --outfile "C:\Users\kodep\models\qwen3-4b-effect-codegen-q8_0.gguf" `
-    --outtype q8_0
+.\unsloth_env\Scripts\python.exe training\convert-to-gguf.py
 ```
+
+This creates:
+- `Qwen3-4B.F16.gguf` (~8 GB) - Float16 format
+- `Qwen3-4B.Q8_0.gguf` (~4.3 GB) - Q8_0 quantized format (50% size reduction)
+
+Use the Q8_0 file with llama.cpp for faster inference with minimal quality loss.
 
 ## Running Inference with llama.cpp
 
