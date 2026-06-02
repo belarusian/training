@@ -5,7 +5,19 @@ Fine-tune Qwen3-4B to generate high-quality Effect-style TypeScript code using a
 ## Trained Model
 
 **Download the trained LoRA adapter:**
-https://huggingface.co/Kodep/qwen3-4b-effect-codegen
+https://huggingface.co/Kodep/qwen3-4b-effect-codegen-v2
+
+### Model Performance
+
+| Metric | Value |
+|--------|-------|
+| **Final Reward** | 0.9775 ± 0.2134 |
+| **Reward Improvement** | +0.2012 (+26%) |
+| **KL Divergence** | 0.19 |
+| **Gradient Norm** | 0.282 |
+| **Training Time** | ~63 minutes total |
+
+**Full post-training summary:** See `POST_TRAINING_SUMMARY.md`
 
 ### Quick Start (Pre-trained)
 
