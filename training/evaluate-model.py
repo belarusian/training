@@ -418,9 +418,9 @@ def generate_report(evaluations: list[dict], model_path: str, output_path: str):
             f.write(f"  Prompt:        {sample['prompt'][:100]}...\n")
             f.write(f"  Code Length:   {sample['code_length']} chars\n")
             f.write(f"  Score:         {sample['metrics']['overall_score']:.3f}\n")
-            f.write(f"  Code Tags:     {'✓' if sample['has_code_tags'] else '✗'}\n")
-            f.write(f"  Reasoning:     {'✓' if sample['has_reasoning_tags'] else '✗'}\n")
-            
+            f.write(f"  Code Tags:     {'[OK]' if sample['has_code_tags'] else '[FAIL]'}\n")
+            f.write(f"  Reasoning:     {'[OK]' if sample['has_reasoning_tags'] else '[FAIL]'}\n")
+        
             if 'ground_truth_comparison' in sample:
                 gt = sample['ground_truth_comparison']
                 
@@ -535,7 +535,7 @@ def main():
             evaluation = evaluate_sample(prompt, response, elapsed, ground_truth)
             evaluations.append(evaluation)
             
-            print(f"    ✓ Generated {evaluation['code_length']} chars in {elapsed:.2f}s")
+            print(f"    [OK] Generated {evaluation['code_length']} chars in {elapsed:.2f}s")
             print(f"    Score: {evaluation['metrics']['overall_score']:.2f}")
             
         except Exception as e:
