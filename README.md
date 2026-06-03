@@ -2,6 +2,21 @@
 
 Fine-tune Qwen3-4B to generate high-quality Effect-style TypeScript code using a two-stage pipeline: SFT (Supervised Fine-Tuning) + GRPO (Group Relative Policy Optimization).
 
+## Marcus Aurelius Philosopher Model
+
+**Note**: Marcus Aurelius training is also available in the [Practice repo](https://github.com/belarusian/training) (`src/industry_ml_lab/training/philosopher*`).
+
+| Repo | Model | Approach | Use Case |
+|------|-------|----------|----------|
+| **Training** | Qwen3-4B | SFT + GRPO with Unsloth LoRA | Production ML pipeline, advanced RLHF |
+| **Practice** | Qwen3-100M | Full fine-tuning with PyTorch | Experimentation, learning, tiny LLM |
+
+**Why both?**
+- **Training repo**: Effect TypeScript fine-tuning (primary focus)
+- **Practice repo**: Marcus Aurelius as a learning experiment (separate use case)
+
+See `training/marcus/README.md` for Marcus training details in this repo.
+
 ## Trained Model
 
 **Download the trained LoRA adapter:**
