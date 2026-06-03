@@ -255,10 +255,11 @@ def generate_response(model, tokenizer, prompt: str, max_tokens: int = 2048, tem
     
     outputs = model.generate(
         **inputs_encoded,
-        max_new_tokens=max_tokens,
+        max_new_tokens=512,  # Fixed: generate up to 512 new tokens
         temperature=temperature if not greedy else 0.0,
         do_sample=not greedy,
         pad_token_id=tokenizer.eos_token_id,
+        eos_token_id=tokenizer.eos_token_id,
     )
     
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
