@@ -426,7 +426,7 @@ def generate_report(evaluations: list[dict], model_path: str, output_path: str):
                 
                 # Show soft comparison results
                 if gt['exact_match']:
-                    f.write(f"  Ground Truth:  ✓ EXACT MATCH\n")
+                    f.write(f"  Ground Truth:  [OK] EXACT MATCH\n")
                 else:
                     f.write(f"  Ground Truth:  {gt['similarity_score']:.0%} similar\n")
                     f.write(f"                 Pattern coverage: {gt['pattern_coverage']:.0%}\n")
@@ -434,11 +434,11 @@ def generate_report(evaluations: list[dict], model_path: str, output_path: str):
                         f.write(f"                 Found: {', '.join(gt['key_patterns_found'])}\n")
             else:
                 if sample['metrics']['effect_imports'] > 0:
-                    f.write(f"  Effect:        ✓ ({sample['metrics']['effect_imports']} imports)\n")
+                    f.write(f"  Effect:        [OK] ({sample['metrics']['effect_imports']} imports)\n")
                 if sample['metrics']['schema_usage'] > 0:
-                    f.write(f"  Schema:        ✓ ({sample['metrics']['schema_usage']} usages)\n")
+                    f.write(f"  Schema:        [OK] ({sample['metrics']['schema_usage']} usages)\n")
                 if sample['metrics']['exports'] > 0:
-                    f.write(f"  Exports:       ✓ ({sample['metrics']['exports']} exports)\n")
+                    f.write(f"  Exports:       [OK] ({sample['metrics']['exports']} exports)\n")
             
             f.write("\n")
         

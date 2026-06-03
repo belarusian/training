@@ -26,6 +26,10 @@ node_modules/
 # Training environment (contains large binaries)
 unsloth_env/
 
+# Training data (large files)
+meditations.mb.txt
+marcus_training_data.json
+
 # Training output (model weights ~1GB, hosted on Hugging Face)
 training/output/
 training/output-v2/
