@@ -439,6 +439,14 @@ def generate_report(evaluations: list[dict], model_path: str, output_path: str):
                     f.write(f"  Schema:        [OK] ({sample['metrics']['schema_usage']} usages)\n")
                 if sample['metrics']['exports'] > 0:
                     f.write(f"  Exports:       [OK] ({sample['metrics']['exports']} exports)\n")
+                if sample['metrics']['length'] > 0:
+                    f.write(f"  Length:        {sample['metrics']['length']} chars\n")
+                if sample['metrics']['total_score'] > 0:
+                    f.write(f"  Score:         {sample['metrics']['total_score']:.2f}\n")
+                if sample['metrics']['length'] > 0:
+                    f.write(f"  Length:        {sample['metrics']['length']} chars\n")
+                if sample['metrics']['total_score'] > 0:
+                    f.write(f"  Score:         {sample['metrics']['total_score']:.2f}\n")
             
             f.write("\n")
         
