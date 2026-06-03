@@ -224,6 +224,11 @@ def main():
                 )
                 print(f"    Answer: {answer[:150]}...")
                 
+                # Validate answer quality
+                if len(answer.strip()) < 50:
+                    print(f"    [WARN] Answer too short, skipping")
+                    continue
+                
                 dataset.append({
                     "messages": [
                         {"role": "user", "content": question},
@@ -232,13 +237,8 @@ def main():
                 })
             except Exception as e:
                 print(f"    [ERROR] Failed to generate: {e}")
-                # Fallback to template answer
-                dataset.append({
-                    "messages": [
-                        {"role": "user", "content": question},
-                        {"role": "assistant", "content": f"As Marcus writes in {passage['book']}, Section {passage['section']}: '{passage['text'][:200]}...'\n\nThis teaches us that we should focus on what is within our control and accept what is not."}
-                    ]
-                })
+                print(f"    [SKIP] Skipping this sample - teacher model must work for good training")
+                continue
     
     # Save dataset
     save_dataset(dataset, args.output)
