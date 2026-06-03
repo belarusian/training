@@ -93,9 +93,12 @@ def query_gemma4(prompt: str, system_prompt: str = None) -> str:
     Returns:
         Model response
     """
-    # Gemma 4 API configuration
-    base_url = "http://127.0.0.1:8888/v1"
-    api_key = "sk-unsloth-e1e411873c6d9cbfcff35c3c2ef6c5f8"
+    # Gemma 4 API configuration from environment variables
+    base_url = os.getenv("GEMMA4_BASE_URL", "http://127.0.0.1:8888/v1")
+    api_key = os.getenv("GEMMA4_API_KEY")
+    
+    if not api_key:
+        raise ValueError("GEMMA4_API_KEY environment variable must be set")
     
     headers = {
         "Content-Type": "application/json",
