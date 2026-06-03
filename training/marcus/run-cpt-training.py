@@ -109,6 +109,16 @@ def train_cpt(
     
     # Load and format data
     print(f"\nLoading Meditations from: {meditations_path}")
+    if not os.path.exists(meditations_path):
+        # Try relative to script location
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        fallback_path = os.path.join(script_dir, "..", meditations_path)
+        if os.path.exists(fallback_path):
+            meditations_path = os.path.normpath(fallback_path)
+        else:
+            raise FileNotFoundError(f"Meditations file not found: {meditations_path}")
+    
+    print(f"Using Meditations file: {meditations_path}")
     passages = load_meditations_text(meditations_path)
     
     dataset = format_dataset(passages, tokenizer.eos_token)
