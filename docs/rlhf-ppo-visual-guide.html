@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RLHF & PPO — Visual Guide</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --text: #e2e4eb;
+    --text-dim: #8b8fa3;
+    --accent-blue: #5b8af5;
+    --accent-green: #34d399;
+    --accent-orange: #f59e42;
+    --accent-red: #ef6b73;
+    --accent-purple: #a78bfa;
+    --accent-cyan: #22d3ee;
+    --accent-yellow: #fde68a;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 960px; margin: 0 auto; }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    margin-bottom: 3rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 3rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.5rem;
+    color: var(--accent-cyan);
+  }
+
+  p { margin-bottom: 1rem; color: var(--text-dim); }
+  p strong { color: var(--text); }
+
+  .diagram-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+
+  .diagram-wrapper svg { display: block; margin: 0 auto; }
+
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border-left: 4px solid var(--accent-blue);
+  }
+  .concept-card.green  { border-left-color: var(--accent-green); }
+  .concept-card.orange { border-left-color: var(--accent-orange); }
+  .concept-card.red    { border-left-color: var(--accent-red); }
+  .concept-card.purple { border-left-color: var(--accent-purple); }
+  .concept-card.cyan   { border-left-color: var(--accent-cyan); }
+
+  .concept-card h3 { margin-top: 0; color: var(--text); }
+  .concept-card p { margin-bottom: 0; }
+
+  .formula {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9rem;
+    overflow-x: auto;
+    color: var(--accent-yellow);
+  }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+  }
+  .comparison-table th, .comparison-table td {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  .comparison-table th {
+    background: var(--surface2);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .comparison-table td { color: var(--text-dim); }
+
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .tag.blue   { background: rgba(91,138,245,0.15); color: var(--accent-blue); }
+  .tag.green  { background: rgba(52,211,153,0.15); color: var(--accent-green); }
+  .tag.orange { background: rgba(245,158,66,0.15); color: var(--accent-orange); }
+  .tag.red    { background: rgba(239,107,115,0.15); color: var(--accent-red); }
+  .tag.purple { background: rgba(167,139,250,0.15); color: var(--accent-purple); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .step-list { list-style: none; counter-reset: step; }
+  .step-list li {
+    counter-increment: step;
+    padding: 0.5rem 0 0.5rem 2.5rem;
+    position: relative;
+    color: var(--text-dim);
+  }
+  .step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 1.6rem; height: 1.6rem;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  code {
+    background: var(--surface2);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--accent-orange);
+  }
+
+  .note {
+    background: rgba(91,138,245,0.06);
+    border: 1px solid rgba(91,138,245,0.2);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+  }
+  .note strong { color: var(--accent-blue); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>RLHF &amp; PPO</h1>
+<p class="subtitle">A visual guide to the four moving parts inside the RLHF agent.</p>
+
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:var(--accent-blue)"></span> Generating Policy</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--accent-green)"></span> Reference Policy</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--accent-orange)"></span> Value Model</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--accent-red)"></span> Reward Model</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--accent-purple)"></span> Training Data</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 0 — Terminology                                       -->
+<!-- ============================================================ -->
+<h2>0. Terminology: Policy vs Model</h2>
+<p>
+  Before looking at the diagrams, here's the most important distinction:
+</p>
+
+<div class="concept-card cyan">
+  <h3 style="color:var(--text);">A "model" is a <strong>thing</strong>. A "policy" is a <strong>role</strong>.</h3>
+  <p style="margin-top:0.75rem;">
+    <strong>Model</strong> = a neural network. It has weights, a forward pass, inputs and outputs.
+    It's a concrete object in code.
+  </p>
+  <p>
+    <strong>Policy</strong> = a job. In RL, a policy is "the thing that decides actions."
+    It's not a different object — it's the same network but wearing a different hat.
+  </p>
+  <p style="margin-top:0.75rem;">
+    <strong>So: every policy is a model, but not every model is called a policy.</strong>
+    The word "policy" just signals that this network's job is to make decisions (generate text).
+  </p>
+</div>
+
+<p>
+  With that out of the way, here's the full picture:
+</p>
+
+<p>
+  You start with <strong>one language model</strong> (e.g. Qwen3 4B). During PPO-based RLHF you build
+  <strong>four components</strong> around it. Two of those components are literally the <strong>same neural network</strong>:
+</p>
+
+<div class="concept-card">
+  <h3 style="color:var(--text);">The core LM (appears twice)</h3>
+  <p>
+    <span class="tag blue">Generating Policy</span> — The LM as it is during training. Gets updated every step.
+  </p>
+  <p>
+    <span class="tag green">Reference Policy</span> — An identical copy of the LM's weights at the start of training. Frozen forever.
+    They share the same architecture and start with the same weights; after training begins their weights diverge.
+  </p>
+</div>
+
+<div class="concept-card cyan">
+  <h3 style="color:var(--text);">Helper networks (two separate networks)</h3>
+  <p>
+    <span class="tag orange">Value Model</span> — A separate neural network that estimates "how much reward do I expect from this prompt?" (a baseline).
+  </p>
+  <p>
+    <span class="tag red">Reward Model</span> — A separate neural network that scores a (prompt, completion) pair. Trained beforehand on human preferences.
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1 — What is RLHF at a glance                          -->
+<!-- ============================================================ -->
+<h2>1. RLHF at a Glance</h2>
+<p>
+  The goal of <strong>Reinforcement Learning from Human Feedback</strong> is to take a pre-trained language model
+  and teach it to produce outputs that humans prefer. It works by treating the model as an <strong>agent</strong>
+  in a reinforcement-learning loop:
+</p>
+
+<div class="diagram-wrapper">
+<svg viewBox="0 0 860 310" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:860px;">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#5a5e72"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-blue)"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-red)"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Training Data -->
+  <rect x="10" y="120" width="120" height="70" rx="10" fill="#2a2140" stroke="var(--accent-purple)" stroke-width="2" filter="url(#shadow)"/>
+  <text x="70" y="155" text-anchor="middle" fill="var(--accent-purple)" font-size="13" font-weight="600">Training</text>
+  <text x="70" y="172" text-anchor="middle" fill="var(--accent-purple)" font-size="13" font-weight="600">Data</text>
+
+  <!-- Arrow: Training Data -> Agent -->
+  <line x1="130" y1="155" x2="230" y2="155" stroke="#5a5e72" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="180" y="145" text-anchor="middle" fill="var(--text-dim)" font-size="12">Prompts (s)</text>
+
+  <!-- Agent (RLHF simple version) -->
+  <rect x="240" y="115" width="140" height="80" rx="14" fill="var(--surface2)" stroke="var(--accent-blue)" stroke-width="2" filter="url(#shadow)"/>
+  <text x="310" y="150" text-anchor="middle" fill="var(--accent-blue)" font-size="14" font-weight="700">Agent</text>
+  <text x="310" y="168" text-anchor="middle" fill="var(--text-dim)" font-size="12">π_θ(·)</text>
+
+  <!-- Arrow: Agent -> Reward Model -->
+  <path d="M380,120 C420,120 460,60 500,60" fill="none" stroke="var(--accent-red)" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <text x="445" y="85" text-anchor="middle" fill="var(--accent-red)" font-size="11">Completions (a)</text>
+
+  <!-- Reward Model -->
+  <rect x="510" y="25" width="140" height="70" rx="10" fill="#2e2225" stroke="var(--accent-red)" stroke-width="2" filter="url(#shadow)"/>
+  <text x="580" y="58" text-anchor="middle" fill="var(--accent-red)" font-size="13" font-weight="600">Reward</text>
+  <text x="580" y="75" text-anchor="middle" fill="var(--accent-red)" font-size="13" font-weight="600">Model</text>
+
+  <!-- Arrow: Reward Model -> Agent (reward) -->
+  <path d="M545,95 C545,110 450,130 380,155" fill="none" stroke="var(--accent-red)" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow-red)"/>
+  <text x="490" y="120" text-anchor="middle" fill="var(--accent-red)" font-size="11">Reward (r)</text>
+
+  <!-- Arrow: Agent -> Output label -->
+  <line x1="380" y1="195" x2="380" y2="260" stroke="var(--accent-blue)" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <rect x="320" y="260" width="120" height="42" rx="8" fill="var(--surface2)" stroke="var(--accent-blue)" stroke-width="1.5"/>
+  <text x="380" y="286" text-anchor="middle" fill="var(--accent-blue)" font-size="12" font-weight="600">Final Output</text>
+
+  <!-- Policy update annotation -->
+  <text x="310" y="215" text-anchor="middle" fill="var(--text-dim)" font-size="10" font-style="italic">θ ← θ + α∇J(π_θ)</text>
+</svg>
+</div>
+
+<p>
+  A <strong>prompt</strong> enters the agent, the agent generates a <strong>completion</strong>,
+  a <strong>reward model</strong> scores it, and that score flows back as feedback to update the agent's weights.
+  That's the RLHF loop in its simplest form.
+</p>
+
+<!-- ============================================================ -->
+<!-- SECTION 2 — PPO Architecture (the full picture)               -->
+<!-- ============================================================ -->
+<h2>2. PPO Architecture — The Full Agent</h2>
+<p>
+  PPO (Proximal Policy Optimization) is the algorithm used inside the loop above.
+  The "agent" is composed of <strong>four components</strong>. Two of these are the <strong>same neural network</strong>
+  (Generating Policy and Reference Policy — same architecture, same starting weights, but one is updated and one is frozen).
+  The other two are separate networks (Value Model and Reward Model).
+  This diagram shows how data flows between them:
+</p>
+
+<div class="diagram-wrapper">
+<svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:900px;">
+  <defs>
+    <marker id="a-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-blue)"/>
+    </marker>
+    <marker id="a-green" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-green)"/>
+    </marker>
+    <marker id="a-orange" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-orange)"/>
+    </marker>
+    <marker id="a-red" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-red)"/>
+    </marker>
+    <marker id="a-purple" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent-purple)"/>
+    </marker>
+    <marker id="a-dim" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#5a5e72"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="gen-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(91,138,245,0.12)"/>
+      <stop offset="100%" stop-color="rgba(91,138,245,0.02)"/>
+    </linearGradient>
+    <linearGradient id="ref-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(52,211,153,0.12)"/>
+      <stop offset="100%" stop-color="rgba(52,211,153,0.02)"/>
+    </linearGradient>
+    <linearGradient id="val-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(245,158,66,0.12)"/>
+      <stop offset="100%" stop-color="rgba(245,158,66,0.02)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer box: the Agent -->
+  <rect x="155" y="55" width="610" height="395" rx="16" fill="none" stroke="#3e4358" stroke-width="1.5" stroke-dasharray="8,4"/>
+  <text x="460" y="82" text-anchor="middle" fill="#5a5e72" font-size="13" font-weight="600" letter-spacing="2">AGENT  π_θ(·)</text>
+
+  <!-- ============ TRAINING DATA ============ -->
+  <rect x="10" y="155" width="110" height="64" rx="10" fill="#2a2140" stroke="var(--accent-purple)" stroke-width="2" filter="url(#shadow)"/>
+  <text x="65" y="184" text-anchor="middle" fill="var(--accent-purple)" font-size="13" font-weight="600">Training</text>
+  <text x="65" y="202" text-anchor="middle" fill="var(--accent-purple)" font-size="13" font-weight="600">Data</text>
+
+  <!-- Arrow: Training Data -> Generating Policy -->
+  <line x1="120" y1="187" x2="150" y2="187" stroke="#5a5e72" stroke-width="2" marker-end="url(#a-purple)"/>
+  <text x="135" y="178" text-anchor="middle" fill="var(--text-dim)" font-size="10">prompts s</text>
+
+  <!-- ============ GENERATING POLICY ============ -->
+  <rect x="155" y="110" width="180" height="150" rx="12" fill="url(#gen-grad)" stroke="var(--accent-blue)" stroke-width="2" filter="url(#shadow)"/>
+  <text x="245" y="140" text-anchor="middle" fill="var(--accent-blue)" font-size="14" font-weight="700">Generating Policy</text>
+  <text x="245" y="157" text-anchor="middle" fill="var(--text-dim)" font-size="11">π_θ(a|s)  — updated</text>
+  <text x="245" y="172" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-style="italic">the learner</text>
+
+  <!-- Neural net icon inside Generating Policy -->
+  <circle cx="215" cy="198" r="4" fill="var(--accent-blue)" opacity="0.8"/>
+  <circle cx="230" cy="192" r="4" fill="var(--accent-blue)" opacity="0.8"/>
+  <circle cx="245" cy="196" r="4" fill="var(--accent-blue)" opacity="0.8"/>
+  <circle cx="260" cy="190" r="4" fill="var(--accent-blue)" opacity="0.8"/>
+  <circle cx="275" cy="197" r="4" fill="var(--accent-blue)" opacity="0.8"/>
+  <circle cx="215" cy="215" r="4" fill="var(--accent-blue)" opacity="0.6"/>
+  <circle cx="230" cy="212" r="4" fill="var(--accent-blue)" opacity="0.6"/>
+  <circle cx="245" cy="215" r="4" fill="var(--accent-blue)" opacity="0.6"/>
+  <circle cx="260" cy="210" r="4" fill="var(--accent-blue)" opacity="0.6"/>
+  <circle cx="275" cy="214" r="4" fill="var(--accent-blue)" opacity="0.6"/>
+  <circle cx="215" cy="230" r="4" fill="var(--accent-blue)" opacity="0.4"/>
+  <circle cx="245" cy="232" r="4" fill="var(--accent-blue)" opacity="0.4"/>
+  <circle cx="275" cy="228" r="4" fill="var(--accent-blue)" opacity="0.4"/>
+  <line x1="215" y1="198" x2="230" y2="212" stroke="var(--accent-blue)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="230" y1="192" x2="245" y2="215" stroke="var(--accent-blue)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="245" y1="196" x2="260" y2="210" stroke="var(--accent-blue)" stroke-width="0.5" opacity="0.4"/>
+  <line x1="260" y1="190" x2="275" y2="214" stroke="var(--accent-blue)" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- ============ REFERENCE POLICY ============ -->
+  <rect x="365" y="110" width="180" height="150" rx="12" fill="url(#ref-grad)" stroke="var(--accent-green)" stroke-width="2" filter="url(#shadow)"/>
+  <text x="455" y="140" text-anchor="middle" fill="var(--accent-green)" font-size="14" font-weight="700">Reference Policy</text>
+  <text x="455" y="157" text-anchor="middle" fill="var(--text-dim)" font-size="11">π_ref(a|s)  — frozen</text>
+  <text x="455" y="172" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-style="italic">the anchor</text>
+
+  <!-- Neural net icon inside Reference Policy -->
+  <circle cx="425" cy="198" r="4" fill="var(--accent-green)" opacity="0.8"/>
+  <circle cx="440" cy="192" r="4" fill="var(--accent-green)" opacity="0.8"/>
+  <circle cx="455" cy="196" r="4" fill="var(--accent-green)" opacity="0.8"/>
+  <circle cx="470" cy="190" r="4" fill="var(--accent-green)" opacity="0.8"/>
+  <circle cx="485" cy="197" r="4" fill="var(--accent-green)" opacity="0.8"/>
+  <circle cx="425" cy="215" r="4" fill="var(--accent-green)" opacity="0.6"/>
+  <circle cx="440" cy="212" r="4" fill="var(--accent-green)" opacity="0.6"/>
+  <circle cx="455" cy="215" r="4" fill="var(--accent-green)" opacity="0.6"/>
+  <circle cx="470" cy="210" r="4" fill="var(--accent-green)" opacity="0.6"/>
+  <circle cx="485" cy="214" r="4" fill="var(--accent-green)" opacity="0.6"/>
+  <circle cx="425" cy="230" r="4" fill="var(--accent-green)" opacity="0.4"/>
+  <circle cx="455" cy="232" r="4" fill="var(--accent-green)" opacity="0.4"/>
+  <circle cx="485" cy="228" r="4" fill="var(--accent-green)" opacity="0.4"/>
+  <!-- lock icon -->
+  <rect x="480" y="238" width="12" height="9" rx="2" fill="none" stroke="var(--accent-green)" stroke-width="1"/>
+  <path d="M483,238 C483,233 489,233 489,238" fill="none" stroke="var(--accent-green)" stroke-width="1"/>
+
+  <!-- ============ VALUE MODEL ============ -->
+  <rect x="575" y="110" width="180" height="150" rx="12" fill="url(#val-grad)" stroke="var(--accent-orange)" stroke-width="2" filter="url(#shadow)"/>
+  <text x="665" y="140" text-anchor="middle" fill="var(--accent-orange)" font-size="14" font-weight="700">Value Model</text>
+  <text x="665" y="157" text-anchor="middle" fill="var(--text-dim)" font-size="11">V(s)  — critic</text>
+  <text x="665" y="172" text-anchor="middle" fill="var(--text-dim)" font-size="11" font-style="italic">estimates baseline</text>
+
+  <!-- neural net icon -->
+  <circle cx="635" cy="198" r="4" fill="var(--accent-orange)" opacity="0.8"/>
+  <circle cx="650" cy="193" r="4" fill="var(--accent-orange)" opacity="0.8"/>
+  <circle cx="665" cy="197" r="4" fill="var(--accent-orange)" opacity="0.8"/>
+  <circle cx="680" cy="192" r="4" fill="var(--accent-orange)" opacity="0.8"/>
+  <circle cx="695" cy="198" r="4" fill="var(--accent-orange)" opacity="0.8"/>
+  <circle cx="635" cy="215" r="4" fill="var(--accent-orange)" opacity="0.6"/>
+  <circle cx="650" cy="213" r="4" fill="var(--accent-orange)" opacity="0.6"/>
+  <circle cx="665" cy="216" r="4" fill="var(--accent-orange)" opacity="0.6"/>
+  <circle cx="680" cy="212" r="4" fill="var(--accent-orange)" opacity="0.6"/>
+  <circle cx="695" cy="215" r="4" fill="var(--accent-orange)" opacity="0.6"/>
+  <circle cx="635" cy="232" r="4" fill="var(--accent-orange)" opacity="0.4"/>
+  <circle cx="665" cy="233" r="4" fill="var(--accent-orange)" opacity="0.4"/>
+  <circle cx="695" cy="231" r="4" fill="var(--accent-orange)" opacity="0.4"/>
+
+  <!-- Arrows between Generating, Reference, Value -->
+  <line x1="335" y1="170" x2="360" y2="170" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)" stroke-dasharray="4,3"/>
+  <text x="347" y="162" text-anchor="middle" fill="var(--text-dim)" font-size="9">KL</text>
+
+  <line x1="545" y1="170" x2="570" y2="170" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)" stroke-dasharray="4,3"/>
+  <text x="557" y="162" text-anchor="middle" fill="var(--text-dim)" font-size="9">V(s)</text>
+
+  <!-- ============ Arrow: Generating Policy -> Reward Model (completions) ============ -->
+  <path d="M245,260 C245,300 310,340 420,340" fill="none" stroke="var(--accent-blue)" stroke-width="2" marker-end="url(#a-blue)"/>
+  <text x="340" y="315" text-anchor="middle" fill="var(--accent-blue)" font-size="11">completions a</text>
+
+  <!-- ============ REWARD MODEL ============ -->
+  <rect x="330" y="340" width="180" height="70" rx="10" fill="#2e2225" stroke="var(--accent-red)" stroke-width="2" filter="url(#shadow)"/>
+  <text x="420" y="370" text-anchor="middle" fill="var(--accent-red)" font-size="13" font-weight="600">Reward Model</text>
+  <text x="420" y="387" text-anchor="middle" fill="var(--accent-red)" font-size="11">(scores prompt + completion)</text>
+
+  <!-- Arrow: Reward Model -> Value Model / Advantage -->
+  <path d="M510,365 C560,365 620,310 665,260" fill="none" stroke="var(--accent-red)" stroke-width="2" marker-end="url(#a-red)"/>
+  <text x="600" y="320" text-anchor="middle" fill="var(--accent-red)" font-size="10">reward r</text>
+
+  <!-- ============ ADVANTAGE CALCULATOR ============ -->
+  <rect x="330" y="440" width="180" height="55" rx="10" fill="var(--surface2)" stroke="var(--accent-cyan)" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="420" y="464" text-anchor="middle" fill="var(--accent-cyan)" font-size="12" font-weight="600">Advantage Calculator</text>
+  <text x="420" y="480" text-anchor="middle" fill="var(--text-dim)" font-size="10">A = r − V(s)  (or group stats)</text>
+
+  <!-- Arrows to Advantage -->
+  <line x1="420" y1="410" x2="420" y2="435" stroke="var(--accent-red)" stroke-width="1.5" marker-end="url(#a-red)" stroke-dasharray="4,3"/>
+  <line x1="665" y1="260" x2="420" y2="440" stroke="var(--accent-orange)" stroke-width="1.5" marker-end="url(#a-orange)" stroke-dasharray="4,3"/>
+  <text x="580" y="350" fill="var(--accent-orange)" font-size="9">V(s)</text>
+
+  <!-- Arrow: Advantage -> Generating Policy (update) -->
+  <path d="M420,440 C420,410 340,360 245,260" fill="none" stroke="var(--accent-blue)" stroke-width="2" marker-end="url(#a-blue)" stroke-dasharray="5,3"/>
+  <text x="330" y="350" text-anchor="middle" fill="var(--accent-blue)" font-size="10" font-style="italic">gradient update</text>
+
+  <!-- ============ Outside the agent box ============ -->
+  <!-- KL Penalty annotation -->
+  <rect x="700" y="110" width="170" height="110" rx="8" fill="var(--surface2)" stroke="var(--accent-green)" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="785" y="135" text-anchor="middle" fill="var(--accent-green)" font-size="12" font-weight="600">KL Penalty</text>
+  <text x="785" y="155" text-anchor="middle" fill="var(--text-dim)" font-size="10">KL(π_θ || π_ref)</text>
+  <text x="785" y="175" text-anchor="middle" fill="var(--text-dim)" font-size="10">β · KL &gt; 0</text>
+  <text x="785" y="195" text-anchor="middle" fill="var(--text-dim)" font-size="10">keeps π_θ near π_ref</text>
+  <line x1="555" y1="170" x2="695" y2="160" stroke="var(--accent-green)" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+</svg>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 3 — Component Deep Dives                              -->
+<!-- ============================================================ -->
+<h2>3. Component Deep Dives</h2>
+
+<div class="concept-card">
+  <h3><span class="tag blue">π_θ</span> Generating Policy — "The Student"</h3>
+  <p>
+    The model <strong>actively being trained</strong>. Given a prompt (state <code>s</code>), it generates
+    completions (actions <code>a</code>). Its parameters <code>θ</code> are updated every training step
+    via the PPO loss to maximize expected reward. In the PPO formula this is
+    <code>π_θ(a|s)</code> — the probability of taking action <code>a</code> given state <code>s</code>.
+  </p>
+</div>
+
+<div class="concept-card green">
+  <h3><span class="tag green">π_ref</span> Reference Policy — "The Anchor"</h3>
+  <p>
+    An <strong>identical copy</strong> of the Generating Policy's weights at the start of training.
+    <strong>Same network, same architecture, same starting weights.** They diverge during training — the Generating Policy's weights update, the Reference Policy's stay frozen.
+  </p>
+  <ol class="step-list">
+    <li><strong>KL regularization</strong> — the objective penalizes <code>KL(π_θ || π_ref)</code>, preventing the model from drifting into gibberish just because it found a reward-hacking shortcut.</li>
+    <li><strong>Importance sampling reference</strong> — the PPO clip ratio <code>π_θ / π_θ_old</code> is bounded relative to <code>π_ref</code>, keeping updates stable.</li>
+  </ol>
+  <p style="margin-top:0.75rem;">Think of it as a <strong>guardrail</strong>: the model can learn new behavior, but can't forget its pre-training.</p>
+</div>
+
+<div class="concept-card orange">
+  <h3><span class="tag orange">V(s)</span> Value Model (Critic) — "The Baseline"</h3>
+  <p>
+    A separate neural network that <strong>estimates expected future reward</strong> for a given state.
+    It takes only the state <code>s</code> (the prompt, not the completion) and predicts <code>V(s)</code>.
+  </p>
+  <div class="formula">A(s, a) = r + γ · V(s') − V(s)     ← advantage</div>
+  <p>
+    The advantage tells the agent: <em>"was this action better or worse than what we expected?"</em>
+    Positive advantage → reinforce. Negative → discourage. GRPO removes this model entirely and
+    estimates advantage from <strong>group statistics</strong> (mean + std of rewards across multiple sampled completions).
+  </p>
+</div>
+
+<div class="concept-card red">
+  <h3><span class="tag red">R</span> Reward Model — "The Judge"</h3>
+  <p>
+    In PPO, a neural network trained on human preference data (thumbs up / thumbs down)
+    scores <code>(prompt, completion)</code> pairs. It is the external judge in the loop.
+  </p>
+  <div class="formula">r = RewardModel(prompt, completion)</div>
+  <p>
+    GRPO / RLVR replaces this with a <strong>verifiable reward function</strong> — a deterministic
+    function that checks if the output satisfies certain criteria. No network, no training, just code.
+  </p>
+</div>
+
+<h3>Real example: Effect TypeScript reward function</h3>
+<p>
+  This is the actual reward function used to train <code>qwen3-4b-effect-codegen</code> in this repo:
+</p>
+<div class="formula">
+def reward_fn(completions):<br>
+&nbsp;&nbsp;score = 0.0<br>
+&nbsp;&nbsp;if "&lt;CODE&gt;" in text and "&lt;/CODE&gt;" in text:
+&nbsp;&nbsp;&nbsp;&nbsp;score += 1.0<br>
+&nbsp;&nbsp;if "from effect" in text or "import Effect" in text:
+&nbsp;&nbsp;&nbsp;&nbsp;score += 0.5<br>
+&nbsp;&nbsp;if "Schema" in text:
+&nbsp;&nbsp;&nbsp;&nbsp;score += 0.3<br>
+&nbsp;&nbsp;if "export " in text:
+&nbsp;&nbsp;&nbsp;&nbsp;score += 0.2<br>
+&nbsp;&nbsp;if len(text) &lt; 100:
+&nbsp;&nbsp;&nbsp;&nbsp;score -= 0.5<br>
+</div>
+<p>
+  It checks for structural markers of good Effect TypeScript code — code tags, imports, Schema usage, exports —
+  and penalizes too-short responses. GRPO then computes advantage from the spread of these scores across
+  N sampled completions per prompt (Z-score standardization).
+</p>
+
+<div class="note">
+  <strong>Trained model:</strong> This reward function trains <code>Qwen3-4B</code> to generate Effect-style TypeScript code.
+  The resulting LoRA adapter is available at <a href="https://huggingface.co/Kodep/qwen3-4b-effect-codegen" style="color:var(--accent-blue)">huggingface.co/Kodep/qwen3-4b-effect-codegen</a>.
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 4 — PPO Formula                                       -->
+<!-- ============================================================ -->
+<h2>4. The PPO Objective</h2>
+<p>
+  The loss function drives the gradient updates. Here's the clipped surrogate objective with the KL penalty:
+</p>
+
+<div class="diagram-wrapper">
+<svg viewBox="0 0 860 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:860px;">
+  <text x="30" y="35" fill="var(--accent-cyan)" font-size="14" font-weight="600">PPO Clipped Objective</text>
+
+  <text x="30" y="80" fill="var(--accent-yellow)" font-size="14" font-family="monospace">J(θ) = E [ min( (π_θ / π_θ_old) · A ,   clip( (π_θ / π_θ_old), 1−ε, 1+ε ) · A ) ] − β · KL(π_θ || π_ref)</text>
+
+  <!-- Annotations -->
+  <line x1="180" y1="75" x2="180" y2="120" stroke="#5a5e72" stroke-width="1"/>
+  <text x="180" y="138" text-anchor="middle" fill="var(--accent-blue)" font-size="12" font-weight="600">π_θ</text>
+  <text x="180" y="155" text-anchor="middle" fill="var(--text-dim)" font-size="10">Generating policy</text>
+
+  <line x1="340" y1="75" x2="340" y2="120" stroke="#5a5e72" stroke-width="1"/>
+  <text x="340" y="138" text-anchor="middle" fill="var(--accent-green)" font-size="12" font-weight="600">π_ref</text>
+  <text x="340" y="155" text-anchor="middle" fill="var(--text-dim)" font-size="10">Reference policy (frozen)</text>
+
+  <line x1="500" y1="75" x2="500" y2="120" stroke="#5a5e72" stroke-width="1"/>
+  <text x="500" y="138" text-anchor="middle" fill="var(--accent-orange)" font-size="12" font-weight="600">A</text>
+  <text x="500" y="155" text-anchor="middle" fill="var(--text-dim)" font-size="10">Advantage  (r − V(s))</text>
+
+  <line x1="660" y1="75" x2="660" y2="120" stroke="#5a5e72" stroke-width="1"/>
+  <text x="660" y="138" text-anchor="middle" fill="var(--accent-purple)" font-size="12" font-weight="600">clip(…, 1−ε, 1+ε)</text>
+  <text x="660" y="155" text-anchor="middle" fill="var(--text-dim)" font-size="10">Stability: no large policy jumps</text>
+
+  <line x1="800" y1="75" x2="800" y2="120" stroke="#5a5e72" stroke-width="1"/>
+  <text x="800" y="138" text-anchor="middle" fill="var(--accent-cyan)" font-size="12" font-weight="600">β · KL</text>
+  <text x="800" y="155" text-anchor="middle" fill="var(--text-dim)" font-size="10">Keeps π_θ close to π_ref</text>
+</svg>
+</div>
+
+<div class="note">
+  <strong>Key insight:</strong> The <code>min()</code> picks the smaller of the unclipped ratio and the clipped ratio.
+  When the advantage is positive, clipping prevents the policy from increasing too far.
+  When negative, it prevents decreasing too far. <code>ε</code> is typically <code>0.2</code> (±20%).
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 5 — PPO vs GRPO Comparison                             -->
+<!-- ============================================================ -->
+<h2>5. PPO vs GRPO — What Changes</h2>
+<p>
+  GRPO (Group Relative Policy Optimization, used in DeepSeek-R1) is a simplified variant.
+  Here's what gets removed and why it matters:
+</p>
+
+<table class="comparison-table">
+  <thead>
+    <tr>
+      <th style="width:220px;">Component</th>
+      <th>PPO</th>
+      <th>GRPO</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Generating Policy</strong></td>
+      <td>✅ Trained, updated every step</td>
+      <td>✅ Trained, updated every step</td>
+    </tr>
+    <tr>
+      <td><strong>Reference Policy</strong></td>
+      <td>✅ Frozen copy, KL anchor</td>
+      <td>✅ Frozen copy, KL anchor</td>
+    </tr>
+    <tr>
+      <td><strong>Value Model</strong></td>
+      <td>✅ Separate network — estimates <code>V(s)</code></td>
+      <td><span class="tag red">Removed</span> — replaced by <strong>group statistics</strong> (mean + std of rewards across N sampled completions)</td>
+    </tr>
+    <tr>
+      <td><strong>Reward Model</strong></td>
+      <td>✅ Neural network trained on human preferences</td>
+      <td><span class="tag green">Replaced</span> — with <strong>verifiable reward functions</strong> (RLVR) — regex, exec, exact match</td>
+    </tr>
+    <tr>
+      <td><strong>VRAM savings</strong></td>
+      <td>—</td>
+      <td><span class="tag green">~8x less</span> — no value network + no reward network to load</td>
+    </tr>
+    <tr>
+      <td><strong>Example in this repo</strong></td>
+      <td>—</td>
+      <td>Structural checks: code tags (+1.0), Effect imports (+0.5), Schema (+0.3), exports (+0.2), length penalty (−0.5)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="diagram-wrapper">
+<svg viewBox="0 0 900 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:900px;">
+  <!-- PPO side -->
+  <text x="220" y="30" text-anchor="middle" fill="var(--accent-blue)" font-size="16" font-weight="700">PPO Architecture</text>
+
+  <rect x="30" y="50" width="110" height="55" rx="8" fill="#2a2140" stroke="var(--accent-purple)" stroke-width="1.5"/>
+  <text x="85" y="75" text-anchor="middle" fill="var(--accent-purple)" font-size="12" font-weight="600">Prompts</text>
+  <text x="85" y="92" text-anchor="middle" fill="var(--accent-purple)" font-size="12" font-weight="600">s</text>
+
+  <rect x="170" y="50" width="110" height="55" rx="8" fill="url(#gen-grad)" stroke="var(--accent-blue)" stroke-width="1.5"/>
+  <text x="225" y="75" text-anchor="middle" fill="var(--accent-blue)" font-size="12" font-weight="600">π_θ  (train)</text>
+  <text x="225" y="92" text-anchor="middle" fill="var(--text-dim)" font-size="10">generating</text>
+
+  <rect x="310" y="50" width="110" height="55" rx="8" fill="url(#ref-grad)" stroke="var(--accent-green)" stroke-width="1.5"/>
+  <text x="365" y="75" text-anchor="middle" fill="var(--accent-green)" font-size="12" font-weight="600">π_ref  (frozen)</text>
+  <text x="365" y="92" text-anchor="middle" fill="var(--text-dim)" font-size="10">reference</text>
+
+  <rect x="450" y="50" width="110" height="55" rx="8" fill="url(#val-grad)" stroke="var(--accent-orange)" stroke-width="1.5"/>
+  <text x="505" y="75" text-anchor="middle" fill="var(--accent-orange)" font-size="12" font-weight="600">V(s)  (critic)</text>
+  <text x="505" y="92" text-anchor="middle" fill="var(--text-dim)" font-size="10">value model</text>
+
+  <rect x="590" y="50" width="110" height="55" rx="8" fill="#2e2225" stroke="var(--accent-red)" stroke-width="1.5"/>
+  <text x="645" y="75" text-anchor="middle" fill="var(--accent-red)" font-size="12" font-weight="600">Reward Net</text>
+  <text x="645" y="92" text-anchor="middle" fill="var(--text-dim)" font-size="10">human prefs</text>
+
+  <rect x="730" y="50" width="110" height="55" rx="8" fill="var(--surface2)" stroke="var(--accent-cyan)" stroke-width="1.5"/>
+  <text x="785" y="75" text-anchor="middle" fill="var(--accent-cyan)" font-size="12" font-weight="600">Advantage</text>
+  <text x="785" y="92" text-anchor="middle" fill="var(--text-dim)" font-size="10">A = r − V(s)</text>
+
+  <!-- Arrows PPO -->
+  <line x1="140" y1="77" x2="165" y2="77" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)"/>
+  <line x1="280" y1="77" x2="305" y2="77" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)"/>
+  <line x1="420" y1="77" x2="445" y2="77" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)"/>
+  <line x1="560" y1="77" x2="585" y2="77" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)"/>
+  <line x1="700" y1="77" x2="725" y2="77" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)"/>
+
+  <!-- GRPO side -->
+  <text x="670" y="140" text-anchor="middle" fill="var(--accent-green)" font-size="16" font-weight="700">GRPO Architecture</text>
+
+  <rect x="30" y="155" width="110" height="38" rx="8" fill="#2a2140" stroke="var(--accent-purple)" stroke-width="1.5"/>
+  <text x="85" y="179" text-anchor="middle" fill="var(--accent-purple)" font-size="12" font-weight="600">Prompts</text>
+
+  <rect x="170" y="155" width="110" height="38" rx="8" fill="url(#gen-grad)" stroke="var(--accent-blue)" stroke-width="1.5"/>
+  <text x="225" y="179" text-anchor="middle" fill="var(--accent-blue)" font-size="12" font-weight="600">π_θ  (train)</text>
+
+  <rect x="310" y="155" width="110" height="38" rx="8" fill="url(#ref-grad)" stroke="var(--accent-green)" stroke-width="1.5"/>
+  <text x="365" y="179" text-anchor="middle" fill="var(--accent-green)" font-size="12" font-weight="600">π_ref  (frozen)</text>
+
+  <!-- Strikethrough value model -->
+  <rect x="450" y="155" width="110" height="38" rx="8" fill="#1a1d27" stroke="#5a5e72" stroke-width="1.5"/>
+  <line x1="458" y1="163" x2="552" y2="185" stroke="var(--accent-red)" stroke-width="1.5"/>
+  <text x="505" y="179" text-anchor="middle" fill="#5a5e72" font-size="12" font-weight="600" text-decoration="line-through">V(s)</text>
+
+  <!-- Strikethrough reward net -->
+  <rect x="590" y="155" width="110" height="38" rx="8" fill="#1a1d27" stroke="#5a5e72" stroke-width="1.5"/>
+  <line x1="598" y1="163" x2="692" y2="185" stroke="var(--accent-red)" stroke-width="1.5"/>
+  <text x="645" y="179" text-anchor="middle" fill="#5a5e72" font-size="12" font-weight="600" text-decoration="line-through">Reward Net</text>
+
+  <rect x="730" y="155" width="140" height="38" rx="8" fill="var(--surface2)" stroke="var(--accent-cyan)" stroke-width="1.5"/>
+  <text x="800" y="173" text-anchor="middle" fill="var(--accent-cyan)" font-size="11" font-weight="600">Group Stats</text>
+  <text x="800" y="189" text-anchor="middle" fill="var(--text-dim)" font-size="10">Z-scored rewards</text>
+
+  <!-- Arrows GRPO -->
+  <line x1="140" y1="174" x2="165" y2="174" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)"/>
+  <line x1="280" y1="174" x2="305" y2="174" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)"/>
+  <line x1="420" y1="174" x2="445" y2="174" stroke="var(--accent-red)" stroke-width="1.5" marker-end="url(#a-dim)"/>
+  <line x1="560" y1="174" x2="585" y2="174" stroke="var(--accent-red)" stroke-width="1.5" marker-end="url(#a-dim)"/>
+  <line x1="700" y1="174" x2="725" y2="174" stroke="#5a5e72" stroke-width="1.5" marker-end="url(#a-dim)"/>
+</svg>
+</div>
+
+<div class="note">
+  <strong>TL;DR:</strong> PPO has <strong>4 components</strong> (generating + reference + value + reward),
+  but only <strong>3 separate networks</strong> — generating and reference are the same LM.
+  GRPO has just <strong>2 components</strong> (generating + reference, both the same network).
+  The advantage is computed from <strong>statistics across N sampled completions</strong> instead — hence "Group Relative."
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 6 — One-Sentence Summary                              -->
+<!-- ============================================================ -->
+<h2>6. One-Sentence Summary</h2>
+<div class="diagram-wrapper" style="text-align:center;">
+  <svg viewBox="0 0 860 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:860px;">
+    <rect x="5" y="5" width="850" height="110" rx="10" fill="none" stroke="var(--border)" stroke-width="1"/>
+    <text x="430" y="45" text-anchor="middle" fill="var(--text)" font-size="16" font-weight="600">The Generating Policy</text>
+    <text x="430" y="65" text-anchor="middle" fill="var(--text-dim)" font-size="13">produces completions for prompts</text>
+
+    <text x="430" y="92" text-anchor="middle" fill="var(--text-dim)" font-size="12">the Reward Model scores them → the Value Model estimates baselines →</text>
+    <text x="430" y="108" text-anchor="middle" fill="var(--text-dim)" font-size="12">the Reference Policy prevents drift → gradients flow back to the Generating Policy</text>
+  </svg>
+</div>
+
+</div>
+
+</body>
+</html>
