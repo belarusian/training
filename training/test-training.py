@@ -1,8 +1,8 @@
 """
 Test script for SFT and GRPO-trained models
 Usage: 
-    Stage 1 (SFT):  .\unsloth_env\Scripts\python.exe training\test-training.py --stage sft
-    Stage 2 (GRPO): .\unsloth_env\Scripts\python.exe training\test-training.py --stage grpo
+    Stage 1 (SFT):  python training/test-training.py --stage sft
+    Stage 2 (GRPO): python training/test-training.py --stage grpo
 """
 
 import sys
@@ -57,7 +57,7 @@ def test_sft_model(model_path):
         print(f"Prompt: {prompt}")
         
         messages = [
-            {"role": "system", "content": "You are an expert TypeScript developer specializing in the Effect framework."},
+            {"role": "system", "content": "You are an expert TypeScript developer specializing in the Effect framework. Provide your reasoning first between <start_working_out> and <end_working_out>, then provide your complete TypeScript code implementation between <CODE> and </CODE>."},
             {"role": "user", "content": prompt},
         ]
         

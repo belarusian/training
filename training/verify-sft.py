@@ -7,10 +7,11 @@ Usage:
 """
 
 import sys
+import argparse
 import re
 from unsloth import FastLanguageModel
 
-def verify_sft_model():
+def verify_sft_model(model_path):
     """Verify SFT model learned to generate Effect code."""
     
     print("=" * 70)
@@ -31,9 +32,7 @@ def verify_sft_model():
         (r'export', "Export statement"),
     ]
     
-    model_path = "training/output-v2/qwen3-4b-effect-codegen-sft"
-    
-    print(f"\nLoading SFT model from: {model_path}")
+    print(f"\nLoading model from: {model_path}")
     try:
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name=model_path,
@@ -108,5 +107,27 @@ def verify_sft_model():
     return all_passed
 
 if __name__ == "__main__":
-    success = verify_sft_model()
+    parser = argparse.ArgumentParser(description="Verify SFT model")
+    parser.add_argument("--stage", choices=["sft", "grpo"], default="sft",
+                        help="Training stage to verify: 'sft' or 'grpo'")
+    args = parser.parse_args()
+    
+    model_path = "training/output-v2/qwen3-4b-effect-codegen-sft" if args.stage == "sft" else "training/output-v2/qwen3-4b-effect-codegen-v2"
+    
+    print(f"\n{'=' * 70}")
+    print(f"VERIFICATION: {args.stage.upper()} MODEL")
+    print(f"{'=' * 70}\n")
+    
+    success = verify_sft_model(model_path)
+    
+    print(f"\n{'=' * 70}")
+    if success:
+        print("[OK] VERIFICATION PASSED")
+    else:
+        print("[FAIL] VERIFICATION FAILED")
+    print(f"{'=' * 70}\n")
+    print("Next steps:")
+    print("1. If SFT verification fails: Re-run SFT training with updated data format")
+    print("2. If GRPO verification fails: Check GRPO training logs and reward function")
+    print("3. If both pass: Model is ready for production use")
     sys.exit(0 if success else 1)
