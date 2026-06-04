@@ -255,7 +255,7 @@ def generate_response(model, tokenizer, prompt: str, max_tokens: int = 2048, tem
     
     outputs = model.generate(
         **inputs_encoded,
-        max_new_tokens=512,  # Fixed: generate up to 512 new tokens
+        max_new_tokens=2048,  # Increased: generate up to 2048 new tokens for full Effect code
         temperature=temperature if not greedy else 0.0,
         do_sample=not greedy,
         pad_token_id=tokenizer.eos_token_id,
@@ -304,6 +304,7 @@ def evaluate_sample(prompt: str, response: str, elapsed: float, ground_truth: Op
             "effect_imports": count_effect_imports(code),
             "schema_usage": count_schema_usage(code),
             "exports": count_exports(code),
+            "length": len(code),
             "overall_score": reward_details["total"],
         },
     }
@@ -442,12 +443,8 @@ def generate_report(evaluations: list[dict], model_path: str, output_path: str):
                     f.write(f"  Exports:       [OK] ({sample['metrics']['exports']} exports)\n")
                 if sample['metrics']['length'] > 0:
                     f.write(f"  Length:        {sample['metrics']['length']} chars\n")
-                if sample['metrics']['total_score'] > 0:
-                    f.write(f"  Score:         {sample['metrics']['total_score']:.2f}\n")
-                if sample['metrics']['length'] > 0:
-                    f.write(f"  Length:        {sample['metrics']['length']} chars\n")
-                if sample['metrics']['total_score'] > 0:
-                    f.write(f"  Score:         {sample['metrics']['total_score']:.2f}\n")
+                if sample['metrics']['overall_score'] > 0:
+                    f.write(f"  Score:         {sample['metrics']['overall_score']:.2f}\n")
             
             f.write("\n")
         

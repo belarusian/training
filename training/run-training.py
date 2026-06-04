@@ -221,6 +221,7 @@ print()
 # 9. Reward function
 # ---------------------------------------------------------------------------
 def reward_fn(prompts, completions, **kwargs):
+    import re
     rewards = []
     for text in completions:
         score = 0.0
@@ -237,8 +238,28 @@ def reward_fn(prompts, completions, **kwargs):
         if "export " in text:
             score += 0.2
 
-        if len(text) < 100:
+        # Extract code between <CODE> tags
+        code_match = re.search(r'<CODE>(.*?)</CODE>', text, re.DOTALL)
+        code_content = code_match.group(1) if code_match else ""
+        code_len = len(code_content)
+
+        # Penalize very short code content heavily - model needs to generate actual code
+        if code_len < 100:
+            score -= 2.0  # Heavy penalty for minimal code
+        elif code_len < 200:
+            score -= 1.0  # Still too short
+        elif code_len < 500:
             score -= 0.5
+        elif code_len < 1000:
+            score += 0.2
+        elif code_len < 2000:
+            score += 0.4
+        elif code_len < 5000:
+            score += 0.6
+        elif code_len < 10000:
+            score += 0.8
+        else:
+            score += 0.5
 
         rewards.append(score)
 

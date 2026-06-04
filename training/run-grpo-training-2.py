@@ -202,15 +202,27 @@ def compute_reward_details(completions):
         if "export " in text:
             components["exports"] = 0.2
         
-        text_len = len(text)
-        if text_len < 100:
+        # Extract code between <CODE> tags
+        import re
+        code_match = re.search(r'<CODE>(.*?)</CODE>', text, re.DOTALL)
+        code_content = code_match.group(1) if code_match else ""
+        code_len = len(code_content)
+        
+        # Penalize very short code content heavily - model needs to generate actual code
+        if code_len < 100:
+            components["length"] = -2.0  # Heavy penalty for minimal code
+        elif code_len < 200:
+            components["length"] = -1.0  # Still too short
+        elif code_len < 500:
             components["length"] = -0.5
-        elif text_len < 200:
-            components["length"] = 0.3
-        elif text_len < 1000:
-            components["length"] = 0.5
-        elif text_len < 2000:
-            components["length"] = 0.7
+        elif code_len < 1000:
+            components["length"] = 0.2
+        elif code_len < 2000:
+            components["length"] = 0.4
+        elif code_len < 5000:
+            components["length"] = 0.6
+        elif code_len < 10000:
+            components["length"] = 0.8
         else:
             components["length"] = 0.5
         
