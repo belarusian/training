@@ -56,15 +56,11 @@ Training Data Prompts (s) → Agent π_θ(·) → Completions (a) → Reward Mod
 
 A **prompt** enters the agent, the agent generates a **completion**, a **reward model** scores it, and that score flows back as feedback to update the agent's weights. That's the RLHF loop in its simplest form.
 
-![RLHF Diagram](https://belarusian.github.io/training/rlhf-ppo-visual-guide.html#rlhf-diagram)
-
 ---
 
 ## 2. PPO Architecture — The Full Agent
 
 PPO (Proximal Policy Optimization) is the algorithm used inside the loop above. The "agent" is composed of **four components**. Two of these are the **same neural network** (Generating Policy and Reference Policy — same architecture, same starting weights, but one is updated and one is frozen). The other two are separate networks (Value Model and Reward Model).
-
-![PPO Architecture Diagram](https://belarusian.github.io/training/rlhf-ppo-visual-guide.html#ppo-diagram)
 
 ---
 
@@ -166,8 +162,6 @@ GRPO (Group Relative Policy Optimization, used in DeepSeek-R1) is a simplified v
 | **Reward Model** | ✅ Neural network trained on human preferences | ✅ Replaced — with **verifiable reward functions** (RLVR) — regex, exec, exact match |
 | **VRAM savings** | — | ~8x less — no value network + no reward network to load |
 | **Example in this repo** | — | Structural checks: code tags (+1.0), Effect imports (+0.5), Schema (+0.3), exports (+0.2), length penalty (−0.5) |
-
-![PPO vs GRPO](https://belarusian.github.io/training/rlhf-ppo-visual-guide.html#ppo-grpo-comparison)
 
 > **TL;DR:** PPO has **4 components** (generating + reference + value + reward), but only **3 separate networks** — generating and reference are the same LM. GRPO has just **2 components** (generating + reference, both the same network). The advantage is computed from **statistics across N sampled completions** instead — hence "Group Relative."
 
