@@ -104,7 +104,12 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     max_lora_rank=RANK,
     gpu_memory_utilization=0.85,
 )
-print("SFT adapter loaded.\n")
+print("SFT adapter loaded.")
+
+# Merge SFT adapter into base model so GRPO trains on top of SFT-finetuned model
+print("Merging SFT adapter into base model...")
+model = model.merge_and_unload()
+print("SFT adapter merged.\n")
 
 # ---------------------------------------------------------------------------
 # 2. Configure LoRA adapters
@@ -123,7 +128,7 @@ model = FastLanguageModel.get_peft_model(
     use_rslora=False,
     loftq_config=None,
 )
-print("LoRA adapters configured.\n")
+print("GRPO LoRA adapters configured.\n")
 
 # ---------------------------------------------------------------------------
 # 3. Load and format training data
