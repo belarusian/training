@@ -179,4 +179,4 @@ GRPO (Group Relative Policy Optimization, used in DeepSeek-R1) is a simplified v
 
 ---
 
-*Original HTML version: [literature/rlhf-ppo-visual-guide.html](../literature/rlhf-ppo-visual-guide.html)*
+
